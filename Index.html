@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskGlow Pro - User Portal</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: radial-gradient(circle at top right, #1e1b4b, #090d16);
+        }
+        .glass-card {
+            background: rgba(15, 23, 42, 0.65);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+        .nav-active {
+            color: #38bdf8;
+            background: linear-gradient(to bottom, rgba(56, 189, 248, 0.1), rgba(56, 189, 248, 0.02));
+            border-top: 2px solid #38bdf8;
+        }
+        .page-animate {
+            animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="pb-28 text-slate-100 min-h-screen antialiased select-none">
+
+    <section id="page-auth" class="min-h-screen flex flex-col justify-center items-center p-4 max-w-md mx-auto relative page-animate">
+        <div class="w-full text-center mb-8">
+            <div class="h-14 w-14 rounded-2xl bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center font-bold text-white text-2xl mx-auto shadow-xl">T</div>
+            <h1 class="text-3xl font-extrabold mt-4 bg-clip-text text-transparent bg-gradient-to-r from-sky-400 via-indigo-200 to-purple-400">TaskGlow Pro</h1>
+            <p class="text-xs text-slate-400 mt-1">Next-Gen Micro Task & Campaign Network</p>
+        </div>
+
+        <div id="auth-signin-box" class="glass-card w-full p-6 rounded-3xl space-y-4 shadow-2xl">
+            <h2 class="text-base font-bold text-slate-200">👤 ইউজার লগইন (Sign In)</h2>
+            <form id="form-signin" class="space-y-3.5">
+                <div>
+                    <label class="text-xs font-semibold text-slate-400 block mb-1">ইমেইল এড্রেস</label>
+                    <input type="email" id="signin-email" required placeholder="user@gmail.com" class="w-full bg-slate-950 border border-slate-800 p-3 rounded-xl text-xs text-white focus:outline-none focus:border-sky-500">
+                </div>
+                <div>
+                    <label class="text-xs font-semibold text-slate-400 block mb-1">পাসওয়ার্ড</label>
+                    <input type="password" id="signin-password" required placeholder="••••••••" class="w-full bg-slate-950 border border-slate-800 p-3 rounded-xl text-xs text-white focus:outline-none focus:border-sky-500">
+                </div>
+                <button type="submit" class="w-full bg-gradient-to-r from-sky-500 to-indigo-600 text-white p-3 rounded-xl font-bold text-xs shadow-lg">ড্যাশবোর্ডে প্রবেশ করুন 🔓</button>
+            </form>
+            <p class="text-center text-xs text-slate-400 pt-2">নতুন অ্যাকাউন্ট প্রয়োজন? <span onclick="toggleAuthMode('signup')" class="text-sky-400 font-semibold cursor-pointer underline">Sign Up করুন</span></p>
+        </div>
+
+        <div id="auth-signup-box" class="glass-card w-full p-6 rounded-3xl space-y-4 hidden shadow-2xl">
+            <h2 class="text-base font-bold text-slate-200">📝 নিবন্ধন করুন (Sign Up)</h2>
+            <form id="form-signup" class="space-y-3">
+                <div>
+                    <label class="text-xs font-semibold text-slate-400 block mb-1">সম্পূর্ণ নাম</label>
+                    <input type="text" id="signup-realname" required placeholder="Siam Hossein" class="w-full bg-slate-950 border border-slate-800 p-2.5 rounded-xl text-xs text-white focus:outline-none focus:border-sky-500">
+                </div>
+                <div>
+                    <label class="text-xs font-semibold text-slate-400 block mb-1">ইউজারনেম</label>
+                    <input type="text" id="signup-username" required placeholder="myname656" pattern="^[a-zA-Z0-9]+$" class="w-full bg-slate-950 border border-slate-800 p-2.5 rounded-xl text-xs text-white focus:outline-none focus:border-sky-500">
+                </div>
+                <div>
+                    <label class="text-xs font-semibold text-slate-400 block mb-1">ইমেইল</label>
+                    <input type="email" id="signup-email" required placeholder="example@gmail.com" class="w-full bg-slate-950 border border-slate-800 p-2.5 rounded-xl text-xs text-white focus:outline-none focus:border-sky-500">
+                </div>
+                <div>
+                    <label class="text-xs font-semibold text-slate-400 block mb-1">পাসওয়ার্ড</label>
+                    <input type="password" id="signup-password" required placeholder="ন্যূনতম ৬ ডিজিট" class="w-full bg-slate-950 border border-slate-800 p-2.5 rounded-xl text-xs text-white focus:outline-none focus:border-sky-500">
+                </div>
+                <div>
+                    <label class="text-xs font-semibold text-slate-400 block mb-1">পাসওয়ার্ড নিশ্চিত করুন</label>
+                    <input type="password" id="signup-confirm-password" required placeholder="আবার টাইপ করুন" class="w-full bg-slate-950 border border-slate-800 p-2.5 rounded-xl text-xs text-white focus:outline-none focus:border-sky-500">
+                </div>
+                <button type="submit" class="w-full bg-gradient-to-r from-sky-500 to-indigo-600 text-white p-3 rounded-xl font-bold text-xs shadow-md">রেজিস্ট্রেশন সম্পন্ন করুন 🎉</button>
+            </form>
+            <p class="text-center text-xs text-slate-400 pt-1">ইতিমধ্যে অ্যাকাউন্ট আছে? <span onclick="toggleAuthMode('signin')" class="text-sky-400 font-semibold cursor-pointer underline">Sign In করুন</span></p>
+        </div>
+    </section>
+
+    <div id="main-app-interface" class="hidden">
+        <header class="glass-card sticky top-0 z-40 px-4 py-3.5 flex justify-between items-center border-b border-slate-900">
+            <div class="flex items-center gap-2">
+                <div class="h-8 w-8 rounded-lg bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center font-bold text-white shadow-lg">T</div>
+                <span class="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-sky-400 to-indigo-300">TaskGlow</span>
+            </div>
+            <div id="header-balance-badge" class="bg-slate-950/80 border border-slate-800 px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5">
+                <span class="text-yellow-400 text-sm">🪙</span> <span id="top-balance" class="text-slate-200">0</span> <span class="text-slate-400 font-normal">Pts</span>
+            </div>
+        </header>
+
+        <main class="p-4 max-w-md mx-auto space-y-4">
+            
+            <section id="page-dashboard" class="page-content space-y-4 page-animate">
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="glass-card p-4 rounded-2xl border-b-2 border-yellow-500/30">
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">পয়েন্ট ব্যালেন্স</p>
+                        <p class="text-3xl font-extrabold text-yellow-400 mt-1" id="dash-balance">0</p>
+                    </div>
+                    <div class="glass-card p-4 rounded-2xl border-b-2 border-emerald-500/30">
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">মোট কমপ্লিট টাস্ক</p>
+                        <p class="text-3xl font-extrabold text-emerald-400 mt-1" id="dash-completed">0</p>
+                    </div>
+                </div>
+
+                <div id="warning-box" class="hidden bg-red-500/10 border border-red-500/20 text-red-300 p-3.5 rounded-xl text-xs text-center font-medium animate-pulse">
+                    ⚠️ দুঃখিত! এই রিকোয়েস্টের জন্য ন্যূনতম <b>৩০ পয়েন্ট</b> থাকা আবশ্যক।
+                </div>
+
+                <div class="glass-card p-4 rounded-2xl border-l-4 border-sky-500">
+                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">গ্লোবাল নেটওয়ার্ক স্ট্যাটাস</h3>
+                    <div class="grid grid-cols-2 gap-3 mt-3 text-xs">
+                        <div class="bg-slate-950/60 p-3 rounded-xl border border-slate-900"><span class="text-slate-400">সক্রিয় জব লিংক:</span> <b id="stat-active-tasks" class="text-sky-400 text-sm block mt-0.5">0</b></div>
+                        <div class="bg-slate-950/60 p-3 rounded-xl border border-slate-900"><span class="text-slate-400">মোট নিবন্ধিত মেম্বার:</span> <b id="stat-total-users" class="text-sky-400 text-sm block mt-0.5">0</b></div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="page-tasks" class="page-content hidden space-y-4 page-animate">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-base font-bold text-slate-200">উপলব্ধ লাইভ কাজ সমূহ</h2>
+                    <span class="text-[10px] bg-slate-950 text-slate-400 px-2 py-1 rounded border border-slate-800">১ কাজ = +১ পয়েন্ট</span>
+                </div>
+                <div id="tasks-container" class="space-y-3"></div>
+            </section>
+
+            <section id="page-withdraw" class="page-content hidden space-y-4 page-animate">
+                <div class="grid grid-cols-2 gap-2 bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs text-center">
+                    <button id="tab-btn-camp" onclick="toggleFormSubTab('camp')" class="bg-sky-500/10 text-sky-400 font-bold p-2.5 rounded-lg transition-all">Add Campaign</button>
+                    <button id="tab-btn-withdraw" onclick="toggleFormSubTab('withdraw')" class="text-slate-400 font-medium p-2.5 rounded-lg transition-all">Withdraw Points</button>
+                </div>
+
+                <div id="sub-page-camp" class="space-y-3">
+                    <div class="bg-sky-500/10 border border-sky-500/20 text-sky-300 p-3 rounded-xl text-xs">
+                        📌 <b>অ্যাড ক্যাম্পেইন পলিসি:</b> ১টি ক্যাম্পেইন লাইভ করতে ফিক্সড <b>৩০ পয়েন্ট</b> খরচ হবে। অন্য মেম্বাররা আপনার কাজ মোট ৩০ বার কমপ্লিট করলে অ্যাডটি অটো রিমুভ হয়ে যাবে।
+                    </div>
+                    <form id="campaign-form" class="space-y-3.5 glass-card p-4 rounded-2xl">
+                        <div>
+                            <label class="text-xs font-semibold text-slate-400 block mb-1">কাজের ক্যাটাগরি</label>
+                            <select id="campaign-type" class="w-full bg-slate-950 border border-slate-800 p-3 rounded-xl text-xs text-white">
+                                <option value="YouTube Subscribe">YouTube - Channel Subscribe</option>
+                                <option value="YouTube Like">YouTube - Video Like</option>
+                                <option value="Facebook Follow">Facebook - Page/Profile Follow</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-xs font-semibold text-slate-400 block mb-1">লিংক / URL</label>
+                            <input type="url" id="campaign-link" required placeholder="https://..." class="w-full bg-slate-950 border border-slate-800 p-3 rounded-xl text-xs text-white">
+                        </div>
+                        <div>
+                            <label class="text-xs font-semibold text-slate-400 block mb-1">নির্দেশনা (Description)</label>
+                            <textarea id="campaign-desc" rows="2" placeholder="ইউজার কিভাবে কাজটি করবে..." class="w-full bg-slate-950 border border-slate-800 p-3 rounded-xl text-xs text-white"></textarea>
+                        </div>
+                        <button type="submit" class="w-full bg-gradient-to-r from-sky-500 to-indigo-600 text-white p-3 rounded-xl font-bold text-xs shadow-md">৩০ পয়েন্ট খরচ করে অ্যাড রান করুন 🚀</button>
+                    </form>
+                </div>
+
+                <div id="sub-page-withdraw" class="space-y-3 hidden">
+                    <div class="bg-amber-500/10 border border-amber-500/20 text-amber-300 p-3 rounded-xl text-xs">
+                        ⚠️ <b>উইথড্র পলিসি:</b> মিনিমাম উইথড্র রিকোয়েস্ট <b>৩০ পয়েন্ট</b>। পেমেন্ট ২৪ ঘণ্টার মধ্যে কমপ্লিট করা হয়।
+                    </div>
+                    <form id="withdraw-form" class="space-y-3.5 glass-card p-4 rounded-2xl">
+                        <div>
+                            <label class="text-xs font-semibold text-slate-400 block mb-1">মেথড সিলেক্ট করুন</label>
+                            <select id="withdraw-method" class="w-full bg-slate-950 border border-slate-800 p-3 rounded-xl text-xs text-white">
+                                <option value="bKash">বিকাশ (bKash)</option>
+                                <option value="Nagad">নগদ (Nagad)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-xs font-semibold text-slate-400 block mb-1">অ্যাকাউন্ট নম্বর</label>
+                            <input type="tel" id="withdraw-number" required placeholder="01XXXXXXXXX" class="w-full bg-slate-950 border border-slate-800 p-3 rounded-xl text-xs text-white">
+                        </div>
+                        <button type="submit" class="w-full bg-gradient-to-r from-amber-500 to-orange-600 text-white p-3 rounded-xl font-bold text-xs">৩০ পয়েন্ট উইথড্র রিকোয়েস্ট পাঠান 💰</button>
+                    </form>
+                </div>
+            </section>
+
+            <section id="page-profile" class="page-content hidden space-y-4 page-animate">
+                <h2 class="text-base font-bold text-slate-200">আপনার অ্যাকাউন্ট প্রোফাইল</h2>
+                <div class="glass-card p-4 rounded-2xl space-y-3.5">
+                    <div class="flex justify-between items-center border-b border-slate-900 pb-3">
+                        <span class="text-slate-400 text-xs">রিয়েল নেম</span>
+                        <span class="font-bold text-xs text-slate-200" id="prof-realname">Loading...</span>
+                    </div>
+                    <div class="flex justify-between items-center border-b border-slate-900 pb-3">
+                        <span class="text-slate-400 text-xs">ইউজারনেম</span>
+                        <span class="font-bold text-xs text-sky-400" id="prof-username">Loading...</span>
+                    </div>
+                    <div class="flex justify-between items-center border-b border-slate-900 pb-3">
+                        <span class="text-slate-400 text-xs">ইমেইল</span>
+                        <span class="font-semibold text-xs text-slate-400" id="prof-email">Loading...</span>
+                    </div>
+                    <button onclick="handleSignOut()" class="w-full bg-rose-500/10 text-rose-400 border border-rose-500/20 hover:bg-rose-500/20 p-2.5 rounded-xl text-xs font-semibold transition-all">Sign Out 🚪</button>
+                </div>
+            </section>
+
+        </main>
+
+        <nav id="bottom-nav-bar" class="fixed bottom-0 left-0 right-0 glass-card border-t border-slate-900/80 flex justify-around py-3 text-slate-400 text-[11px] font-medium z-50 max-w-md mx-auto">
+            <button onclick="switchPage('dashboard')" id="nav-dashboard" class="flex flex-col items-center gap-1.5 py-1 px-2.5 nav-active"><span>🏠</span><span>ড্যাশবোর্ড</span></button>
+            <button onclick="switchPage('tasks')" id="nav-tasks" class="flex flex-col items-center gap-1.5 py-1 px-2.5"><span>🎯</span><span>টাস্ক</span></button>
+            <button onclick="switchPage('withdraw')" id="nav-withdraw" class="flex flex-col items-center gap-1.5 py-1 px-2.5"><span>💎</span><span>ক্যাম্পেইন</span></button>
+            <button onclick="switchPage('profile')" id="nav-profile" class="flex flex-col items-center gap-1.5 py-1 px-2.5"><span>👤</span><span>প্রোফাইল</span></button>
+        </nav>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyDbEeEdtFT3dqevaAnIhXzuAsRGggZLl3c",
+            authDomain: "taskglow-11a30.firebaseapp.com",
+            projectId: "taskglow-11a30",
+            storageBucket: "taskglow-11a30.firebasestorage.app",
+            messagingSenderId: "196409472048",
+            appId: "1:196409472048:web:6f8ea794c0ec54d6afa9f5",
+            measurementId: "G-E6ZCBDRTSJ"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+
+        let currentUserId = "";
+        let currentUserProfile = {};
+
+        function toggleAuthMode(mode) {
+            if(mode === 'signup') {
+                document.getElementById('auth-signin-box').classList.add('hidden');
+                document.getElementById('auth-signup-box').classList.remove('hidden');
+            } else {
+                document.getElementById('auth-signup-box').classList.add('hidden');
+                document.getElementById('auth-signin-box').classList.remove('hidden');
+            }
+        }
+
+        function toggleFormSubTab(subTab) {
+            if(subTab === 'camp') {
+                document.getElementById('sub-page-camp').classList.remove('hidden');
+                document.getElementById('sub-page-withdraw').classList.add('hidden');
+                document.getElementById('tab-btn-camp').className = "bg-sky-500/10 text-sky-400 font-bold p-2.5 rounded-lg transition-all";
+                document.getElementById('tab-btn-withdraw').className = "text-slate-400 font-medium p-2.5 rounded-lg transition-all";
+            } else {
+                document.getElementById('sub-page-withdraw').classList.remove('hidden');
+                document.getElementById('sub-page-camp').classList.add('hidden');
+                document.getElementById('tab-btn-withdraw').className = "bg-amber-500/10 text-amber-400 font-bold p-2.5 rounded-lg transition-all";
+                document.getElementById('tab-btn-camp').className = "text-slate-400 font-medium p-2.5 rounded-lg transition-all";
+            }
+        }
+
+        // User Sign In Submit Action
+        document.getElementById('form-signin').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const email = document.getElementById('signin-email').value.trim();
+            const password = document.getElementById('signin-password').value;
+            try { 
+                await auth.signInWithEmailAndPassword(email, password); 
+            } catch(error) { 
+                alert("লগইন ব্যর্থ হয়েছে: " + error.message); 
+            }
+        });
+
+        // User Sign Up Submit Action
+        document.getElementById('form-signup').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const realName = document.getElementById('signup-realname').value.trim();
+            const username = document.getElementById('signup-username').value.trim().toLowerCase();
+            const email = document.getElementById('signup-email').value.trim();
+            const password = document.getElementById('signup-password').value;
+            const confirmPassword = document.getElementById('signup-confirm-password').value;
+
+            if(password !== confirmPassword) return alert("পাসওয়ার্ড মেলেনি!");
+
+            try {
+                const usernameCheck = await db.collection("users").where("username", "==", username).get();
+                if(!usernameCheck.empty) return alert("ইউজারনেমটি ইতিমধ্যে বিদ্যমান!");
+
+                const cred = await auth.createUserWithEmailAndPassword(email, password);
+                await db.collection("users").doc(cred.user.uid).set({
+                    realName: realName,
+                    username: username,
+                    email: email,
+                    points: 35, 
+                    completed: 0,
+                    adsRun: 0
+                });
+                alert("নিবন্ধন সফল হয়েছে!");
+            } catch(error) { alert("সাইন-আপ সমস্যা: " + error.message); }
+        });
+
+        // Session Sync Router
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                currentUserId = user.uid;
+                document.getElementById('page-auth').classList.add('hidden');
+                document.getElementById('main-app-interface').classList.remove('hidden');
+                initializeAppData();
+            } else {
+                currentUserId = "";
+                document.getElementById('main-app-interface').classList.add('hidden');
+                document.getElementById('page-auth').classList.remove('hidden');
+            }
+        });
+
+        function initializeAppData() {
+            // Profile Snapshot Listener
+            db.collection("users").doc(currentUserId).onSnapshot((doc) => {
+                if (doc.exists) {
+                    currentUserProfile = doc.data();
+                    document.getElementById('prof-realname').innerText = currentUserProfile.realName || "User";
+                    document.getElementById('prof-username').innerText = currentUserProfile.username ? "@" + currentUserProfile.username : "@user";
+                    document.getElementById('prof-email').innerText = currentUserProfile.email;
+                    
+                    document.getElementById('top-balance').innerText = currentUserProfile.points || 0;
+                    document.getElementById('dash-balance').innerText = currentUserProfile.points || 0;
+                    document.getElementById('dash-completed').innerText = currentUserProfile.completed || 0;
+
+                    switchPage('dashboard');
+                }
+            });
+
+            // Total Users Snapshot Count
+            db.collection("users").onSnapshot((snapshot) => {
+                document.getElementById('stat-total-users').innerText = snapshot.size;
+            });
+
+            // Global Live Tasks Realtime Rendering Feed Without Indexing Delay
+            db.collection("tasks").onSnapshot((snapshot) => {
+                const container = document.getElementById('tasks-container');
+                container.innerHTML = "";
+
+                snapshot.forEach((doc) => {
+                    const task = doc.data();
+                    const id = doc.id;
+
+                    // Render in User Panel ONLY IF it's not the creator's own ad
+                    if (task.creator !== currentUserId) {
+                        container.innerHTML += `
+                            <div class="glass-card p-4 rounded-2xl flex justify-between items-center border-l-4 border-sky-500 shadow-md">
+                                <div class="space-y-1 max-w-[70%]">
+                                    <span class="bg-sky-500/10 text-sky-400 text-[9px] font-bold px-2 py-0.5 rounded-md uppercase">${task.type}</span>
+                                    <h4 class="text-xs font-semibold truncate text-slate-200 mt-1">${task.link}</h4>
+                                    <p class="text-[11px] text-slate-400 truncate">${task.desc || 'No instructions'}</p>
+                                </div>
+                                <button onclick="executeTask('${id}', '${task.link}')" class="bg-gradient-to-r from-sky-500 to-indigo-600 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-lg active:scale-95 transition-all">Start</button>
+                            </div>
+                        `;
+                    }
+                });
+            });
+
+            db.collection("tasks").onSnapshot(s => document.getElementById('stat-active-tasks').innerText = s.size);
+        }
+
+        // Task Execution Rewards
+        async function executeTask(id, url) {
+            window.open(url, '_blank');
+            setTimeout(async () => {
+                const taskRef = db.collection("tasks").doc(id);
+                const tDoc = await taskRef.get();
+                if(!tDoc.exists) return alert("দুঃখিত! এই কাজটি ইতিমধ্যে সম্পূর্ণ হয়ে গেছে।");
+                
+                const taskData = tDoc.data();
+                let currentClicks = (taskData.clicksCompleted || 0) + 1;
+
+                if(currentClicks >= 30) {
+                    await taskRef.delete();
+                } else {
+                    await taskRef.update({ clicksCompleted: currentClicks });
+                }
+
+                await db.collection("users").doc(currentUserId).update({
+                    points: firebase.firestore.FieldValue.increment(1),
+                    completed: firebase.firestore.FieldValue.increment(1)
+                });
+                alert("🎉 সফল! আপনি ১ পয়েন্ট রিওয়ার্ড পেয়েছেন।");
+            }, 3000);
+        }
+
+        // User Launch Campaign (-30 Pts)
+        document.getElementById('campaign-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            if(currentUserProfile.points < 30) { 
+                document.getElementById('warning-box').classList.remove('hidden'); 
+                return; 
+            }
+            
+            await db.collection("users").doc(currentUserId).update({ 
+                points: firebase.firestore.FieldValue.increment(-30),
+                adsRun: firebase.firestore.FieldValue.increment(1)
+            });
+
+            await db.collection("tasks").add({
+                type: document.getElementById('campaign-type').value,
+                link: document.getElementById('campaign-link').value,
+                desc: document.getElementById('campaign-desc').value,
+                creator: currentUserId,
+                clicksCompleted: 0
+            });
+
+            alert("🚀 ক্যাম্পেইন লাইভ হয়েছে! ৩০ পয়েন্ট কেটে নেওয়া হয়েছে।");
+            document.getElementById('campaign-form').reset();
+            switchPage('dashboard');
+        });
+
+        // Withdrawal Submission Form
+        document.getElementById('withdraw-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            if(currentUserProfile.points < 30) {
+                document.getElementById('warning-box').classList.remove('hidden');
+                return;
+            }
+            await db.collection("users").doc(currentUserId).update({ points: firebase.firestore.FieldValue.increment(-30) });
+            alert("💰 উইথড্র রিকোয়েস্ট সফল হয়েছে!");
+            document.getElementById('withdraw-form').reset();
+            switchPage('dashboard');
+        });
+
+        function handleSignOut() { auth.signOut().then(() => switchPage('dashboard')); }
+
+        function switchPage(id) {
+            document.querySelectorAll('.page-content').forEach(p => p.classList.add('hidden'));
+            document.getElementById(`page-${id}`).classList.remove('hidden');
+            document.querySelectorAll('#bottom-nav-bar button').forEach(btn => btn.classList.remove('nav-active'));
+            if(document.getElementById(`nav-${id}`)) document.getElementById(`nav-${id}`).classList.add('nav-active');
+            document.getElementById('warning-box').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
